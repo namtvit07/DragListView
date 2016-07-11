@@ -37,13 +37,14 @@ import android.widget.Toast;
 
 import com.woxthebox.draglistview.BoardView;
 import com.woxthebox.draglistview.DragItem;
+import com.woxthebox.draglistview.KanbanBoardView;
 
 import java.util.ArrayList;
 
 public class BoardFragment extends Fragment {
 
     private static int sCreatedItems = 0;
-    private BoardView mBoardView;
+    private KanbanBoardView mBoardView;
     private int mColumns;
 
     public static BoardFragment newInstance() {
@@ -60,12 +61,12 @@ public class BoardFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.board_layout, container, false);
 
-        mBoardView = (BoardView) view.findViewById(R.id.board_view);
+        mBoardView = (KanbanBoardView) view.findViewById(R.id.board_view);
         mBoardView.setSnapToColumnsWhenScrolling(true);
         mBoardView.setSnapToColumnWhenDragging(true);
         mBoardView.setSnapDragItemToTouch(true);
         mBoardView.setCustomDragItem(new MyDragItem(getActivity(), R.layout.column_item));
-        mBoardView.setBoardListener(new BoardView.BoardListener() {
+        mBoardView.setBoardListener(new KanbanBoardView.BoardListener() {
             @Override
             public void onItemDragStarted(int column, int row) {
                 Toast.makeText(mBoardView.getContext(), "Start - column: " + column + " row: " + row, Toast.LENGTH_SHORT).show();
@@ -85,6 +86,11 @@ public class BoardFragment extends Fragment {
                     Toast.makeText(mBoardView.getContext(), "End - column: " + toColumn + " row: " + toRow, Toast.LENGTH_SHORT).show();
                 }
             }
+
+            @Override
+            public void onColumnPositionChanged(int from, int to) {
+                Toast.makeText(mBoardView.getContext(), "From " + from + " to " + to, Toast.LENGTH_SHORT).show();
+            }
         });
         return view;
     }
@@ -95,6 +101,7 @@ public class BoardFragment extends Fragment {
 
         ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("Board");
 
+        addColumnList();
         addColumnList();
         addColumnList();
         addColumnList();
@@ -140,7 +147,7 @@ public class BoardFragment extends Fragment {
 
     private void addColumnList() {
         final ArrayList<Pair<Long, String>> mItemArray = new ArrayList<>();
-        int addItems = 15;
+        int addItems = 50;
         for (int i = 0; i < addItems; i++) {
             long id = sCreatedItems++;
             mItemArray.add(new Pair<>(id, "Item " + id));
