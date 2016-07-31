@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Point;
+import android.os.Handler;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -52,6 +53,7 @@ public class KanbanBoardView extends HorizontalScrollView implements AutoScrolle
     }
 
     private static final int SCROLL_ANIMATION_DURATION = 325;
+    private static final int PAUSE_COLUMN_SCROLL_DURATION = 1000;
     private Scroller mScroller;
     private AutoScroller mAutoScroller;
     private GestureDetector mGestureDetector;
@@ -75,6 +77,8 @@ public class KanbanBoardView extends HorizontalScrollView implements AutoScrolle
     private ColumnGestureListener mColumnGestureListener;
     private View mDraggingColumnView;
     private int mDraggingColumn;
+    private boolean mShouldScrollList = true;
+
     public KanbanBoardView(Context context) {
         super(context);
     }
@@ -93,7 +97,7 @@ public class KanbanBoardView extends HorizontalScrollView implements AutoScrolle
         Resources res = getResources();
         boolean isPortrait = res.getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
         if (isPortrait) {
-            mColumnWidth = (int) (res.getDisplayMetrics().widthPixels * 0.87);
+            mColumnWidth = (int) (res.getDisplayMetrics().widthPixels);
         } else {
             mColumnWidth = (int) (res.getDisplayMetrics().density * 320);
         }
@@ -702,12 +706,25 @@ public class KanbanBoardView extends HorizontalScrollView implements AutoScrolle
                     scrollToColumn(lastColumn, false);
                     break;
                 case DragEvent.ACTION_DRAG_LOCATION:
-                    // Calc new column to scroll to
-                    int newColumn = getCurrentColumn(event.getX());
-                    if(newColumn != lastColumn) {
-                        scrollToColumn(newColumn, true);
-                        swapColumn(lastColumn, newColumn);
-                        lastColumn = newColumn;
+                    if (mShouldScrollList) {
+                        // Calc new column to scroll to
+                        int newColumn = getCurrentColumn(event.getX() + mColumnWidth / 6);
+                        if (newColumn == lastColumn) {
+                            newColumn = getCurrentColumn(event.getX() - mColumnWidth / 6);
+                        }
+                        if (newColumn != lastColumn) {
+                            scrollToColumn(newColumn, true);
+                            swapColumn(lastColumn, newColumn);
+                            lastColumn = newColumn;
+                            mShouldScrollList = false;
+                            Handler handler = new Handler();
+                            handler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mShouldScrollList = true;
+                                }
+                            }, PAUSE_COLUMN_SCROLL_DURATION);
+                        }
                     }
                     break;
                 case DragEvent.ACTION_DROP:
