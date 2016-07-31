@@ -673,19 +673,40 @@ public class KanbanBoardView extends HorizontalScrollView implements AutoScrolle
 
     class ColumnDragShadowBuilder extends DragShadowBuilder {
         int touchPointXCoord, touchPointYCoord;
+        View view;
+        final int width;
+        final int height;
+        final float rotationRad = 5;
+        final float scale = 0.9f;
+        final int extra = 100; // extra space to avoid clip shadow
 
         public ColumnDragShadowBuilder(View view, int touchPointXCoord,
                                        int touchPointYCoord) {
             super(view);
             this.touchPointXCoord = touchPointXCoord;
             this.touchPointYCoord = touchPointYCoord;
+            this.view = view;
+            int w = (int) (view.getWidth() * view.getScaleX());
+            int h = (int) (view.getHeight() * view.getScaleY());
+            double s = Math.abs(Math.sin(rotationRad));
+            double c = Math.abs(Math.cos(rotationRad));
+            width = (int) (w * c + h * s);
+            height = (int) (w * s + h * c);
         }
 
         @Override
         public void onProvideShadowMetrics(Point shadowSize,
                                            Point shadowTouchPoint) {
             super.onProvideShadowMetrics(shadowSize, shadowTouchPoint);
+            shadowSize.set(view.getWidth() + extra, view.getHeight() + extra);
             shadowTouchPoint.set(touchPointXCoord, touchPointYCoord);
+        }
+
+        @Override
+        public void onDrawShadow(Canvas canvas) {
+            canvas.scale(scale, scale, width / 2, height / 2);
+            canvas.rotate(rotationRad, width / 2, height / 2);
+            super.onDrawShadow(canvas);
         }
     }
     final class HeaderTouchListener implements OnTouchListener {
